@@ -667,28 +667,31 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
+
+
+
 <script>
-// Split & Animate H1 on homepage (no external plugins)
+// Split & Animate H1 on homepage (vanilla + GSAP)
 (function(){
   const h1 = document.querySelector('h1');
   if(!h1) return;
+  h1.textContent = 'Willkommen auf Oberstufe.site';
   const text = h1.textContent;
   h1.setAttribute('aria-label', text);
   h1.innerHTML = '';
   const frag = document.createDocumentFragment();
-  for(const ch of text){
+  for (const ch of text) {
     const span = document.createElement('span');
     span.className = 'split-char';
-    if(ch === ' ') { span.innerHTML = '&nbsp;'; } else { span.textContent = ch; }
+    span.innerHTML = (ch === ' ') ? '&nbsp;' : ch;
     span.style.display = 'inline-block';
     span.style.opacity = '0';
     span.style.transform = 'translateY(40px)';
     frag.appendChild(span);
   }
   h1.appendChild(frag);
-  // Animate with GSAP if available, else fallback CSS
   function run(){
-    if(window.gsap && h1.querySelectorAll('.split-char').length){
+    if (window.gsap && h1.querySelectorAll('.split-char').length) {
       gsap.to(h1.querySelectorAll('.split-char'), {
         opacity: 1,
         y: 0,
@@ -696,14 +699,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
         ease: 'power3.out',
         stagger: 0.05
       });
-    }else{
-      // simple fallback
+    } else {
       h1.querySelectorAll('.split-char').forEach((el,i)=>{
-        setTimeout(()=>{ el.style.opacity='1'; el.style.transform='none'; }, 40*i);
+        setTimeout(()=>{ el.style.opacity='1'; el.style.transform='none'; }, 50*i);
       });
     }
   }
-  if(document.readyState==='complete') run();
+  if (document.readyState === 'complete') run();
   else window.addEventListener('load', run);
 })();
 </script>
