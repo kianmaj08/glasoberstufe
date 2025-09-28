@@ -637,18 +637,16 @@
     return (d.cards||[]).filter(c=> c.is_published !== false);
   }
   function renderWebsites(cards){
-    const grid=document.getElementById('websitesGrid'); if(!grid) return;
-    const items=cards.filter(c=> (c.page||'')==='home');
-    grid.innerHTML = items.map(cardHTML).join('');
+  const grid = document.getElementById('websitesGrid'); if(!grid) return;
+  const items = cards.filter(c => (c.page || '').trim().toLowerCase() === 'home');
+  if (!items.length){
+    grid.innerHTML = `<div class="muted" style="padding:12px 0;">Keine Karten gefunden. Prüfe <code>/data/cards.json</code> und ob <code>"page": "home"</code> gesetzt ist.</div>`;
+    console.warn('[renderWebsites] 0 Items. cards:', cards);
+    return;
   }
-  document.addEventListener('DOMContentLoaded', async ()=>{
-    try{
-      const cards = await loadCards();
-      renderWebsites(cards);
-    }catch(e){
-      console.error('Fehler beim Laden der Karten:', e);
-    }
-  });
+  grid.innerHTML = items.map(cardHTML).join('');
+}
+);
 })();
 </script>
 <script>
