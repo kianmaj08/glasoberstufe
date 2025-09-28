@@ -637,16 +637,18 @@
     return (d.cards||[]).filter(c=> c.is_published !== false);
   }
   function renderWebsites(cards){
-  const grid = document.getElementById('websitesGrid'); if(!grid) return;
-  const items = cards.filter(c => (c.page || '').trim().toLowerCase() === 'home');
-  if (!items.length){
-    grid.innerHTML = `<div class="muted" style="padding:12px 0;">Keine Karten gefunden. Prüfe <code>/data/cards.json</code> und ob <code>"page": "home"</code> gesetzt ist.</div>`;
-    console.warn('[renderWebsites] 0 Items. cards:', cards);
-    return;
+    const grid=document.getElementById('websitesGrid'); if(!grid) return;
+    const items=cards.filter(c=> (c.page||'')==='home');
+    grid.innerHTML = items.map(cardHTML).join('');
   }
-  grid.innerHTML = items.map(cardHTML).join('');
-}
-);
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    try{
+      const cards = await loadCards();
+      renderWebsites(cards);
+    }catch(e){
+      console.error('Fehler beim Laden der Karten:', e);
+    }
+  });
 })();
 </script>
 <script>
@@ -665,31 +667,28 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
-
-
-
 <script>
-// Split & Animate H1 on homepage (vanilla + GSAP)
+// Split & Animate H1 on homepage (no external plugins)
 (function(){
   const h1 = document.querySelector('h1');
   if(!h1) return;
-  h1.textContent = 'Willkommen auf Oberstufe.site';
   const text = h1.textContent;
   h1.setAttribute('aria-label', text);
   h1.innerHTML = '';
   const frag = document.createDocumentFragment();
-  for (const ch of text) {
+  for(const ch of text){
     const span = document.createElement('span');
     span.className = 'split-char';
-    span.innerHTML = (ch === ' ') ? '&nbsp;' : ch;
+    if(ch === ' ') { span.innerHTML = '&nbsp;'; } else { span.textContent = ch; }
     span.style.display = 'inline-block';
     span.style.opacity = '0';
     span.style.transform = 'translateY(40px)';
     frag.appendChild(span);
   }
   h1.appendChild(frag);
+  // Animate with GSAP if available, else fallback CSS
   function run(){
-    if (window.gsap && h1.querySelectorAll('.split-char').length) {
+    if(window.gsap && h1.querySelectorAll('.split-char').length){
       gsap.to(h1.querySelectorAll('.split-char'), {
         opacity: 1,
         y: 0,
@@ -697,14 +696,74 @@ document.addEventListener('DOMContentLoaded', ()=>{
         ease: 'power3.out',
         stagger: 0.05
       });
-    } else {
+    }else{
+      // simple fallback
       h1.querySelectorAll('.split-char').forEach((el,i)=>{
-        setTimeout(()=>{ el.style.opacity='1'; el.style.transform='none'; }, 50*i);
+        setTimeout(()=>{ el.style.opacity='1'; el.style.transform='none'; }, 40*i);
       });
     }
   }
-  if (document.readyState === 'complete') run();
+  if(document.readyState==='complete') run();
   else window.addEventListener('load', run);
+})();
+</script>
+
+
+<script>
+// Robust re-render to ensure cards show even if another script failed
+(function(){
+  function showGridError(msg){
+    var grid = document.getElementById('websitesGrid');
+    if(grid){ grid.innerHTML = '<div class="muted" style="padding:12px 0">'+msg+'</div>'; }
+  }
+  function tagPill(tag){
+    if(!tag) return '';
+    var label = (tag==='sowi' ? 'SoWi' : tag.charAt(0).toUpperCase()+tag.slice(1));
+    return '<span class="pill-tag tag-'+tag+'">'+label+'</span>';
+  }
+  function statusBtnHTML(status){
+    var map = { fertig:['Fertig','status-done'], in_arbeit:['In Arbeit','status-wip'], test:['Test','status-test'], coming_soon:['Coming Soon','status-soon'] };
+    var x = map[status]; return x ? '<span class="status-btn '+x[1]+'">'+x[0]+'</span>' : '';
+  }
+  function cardHTML(c){
+    var tag=(c.tag||'').toLowerCase();
+    var authorsStr = Array.isArray(c.authors) ? c.authors.map(function(a){ return (a && a.name)?a.name:a; }).join(', ') : (c.authors||'');
+    return '<div class="card card--'+tag+'">'+
+      (c.image_url?'<img class="card-thumb" src="'+c.image_url+'" alt="">':'')+
+      '<h3>'+(c.title||'')+'</h3>'+
+      (c.subtitle?'<p class="muted">'+c.subtitle+'</p>':'')+
+      (authorsStr?'<p class="card-authors muted">'+authorsStr+'</p>':'')+
+      '<div class="row-tags"><div class="left">'+tagPill(tag)+'</div></div>'+
+      '<div class="actions"><a class="btn btn-primary" href="'+(c.url||'#')+'" target="_blank" rel="noopener">Öffnen</a>'+statusBtnHTML(c.status)+'</div>'+
+    '</div>';
+  }
+  function renderHome(cards){
+    var grid = document.getElementById('websitesGrid'); if(!grid) return;
+    var items = (cards||[]).filter(function(c){ return ((c.page||'').trim().toLowerCase()==='home') && (c.is_published!==false); });
+    if(!items.length){
+      showGridError('Keine Karten gefunden. Prüfe /data/cards.json und ob "page": "home" gesetzt ist.');
+      return;
+    }
+    grid.innerHTML = items.map(cardHTML).join('');
+  }
+  async function safeLoad(){
+    try{
+      var res = await fetch('/data/cards.json', { cache:'no-cache' });
+      var txt = await res.text();
+      if (/^\s*</.test(txt)) throw new Error('cards.json lieferte HTML statt JSON – Pfad/Rewrite prüfen.');
+      var data = JSON.parse(txt);
+      var arr = Array.isArray(data.cards) ? data.cards : [];
+      renderHome(arr);
+    }catch(e){
+      console.error('[robust] Fehler:', e);
+      showGridError('Fehler beim Laden der Karten: '+e.message);
+    }
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', safeLoad);
+  }else{
+    safeLoad();
+  }
 })();
 </script>
 
