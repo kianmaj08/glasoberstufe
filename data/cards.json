@@ -8,7 +8,7 @@
       "status": "in_arbeit",
       "subtitle": "Ein Lexikon für bekannte Philosophen.",
       "title": "Philexikon",
-      "is_published": true,
+      "is_published": false,
       "type": "website",
       "tag": "philosophie",
       "id": "Philexikon1244"
