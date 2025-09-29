@@ -4070,3 +4070,8 @@ body{ font-family:'Sora', system-ui, -apple-system, Segoe UI, Roboto, Sans-Serif
   .qr-in-footer img{ width:52px; height:52px }
 }
 
+
+/* CTA wieder zentrieren */
+.footer-inner{ justify-content:center !important; }
+.footer-inner .cta-button{ margin:0 auto !important; }
+.footer-inner .footer-meta{ margin-left:0 !important; }

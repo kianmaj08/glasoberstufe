@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="de" data-theme="light">
 <head>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>oberstufe.site</title>
@@ -705,65 +709,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
   if(document.readyState==='complete') run();
   else window.addEventListener('load', run);
-})();
-</script>
-
-
-<script>
-// Robust re-render to ensure cards show even if another script failed
-(function(){
-  function showGridError(msg){
-    var grid = document.getElementById('websitesGrid');
-    if(grid){ grid.innerHTML = '<div class="muted" style="padding:12px 0">'+msg+'</div>'; }
-  }
-  function tagPill(tag){
-    if(!tag) return '';
-    var label = (tag==='sowi' ? 'SoWi' : tag.charAt(0).toUpperCase()+tag.slice(1));
-    return '<span class="pill-tag tag-'+tag+'">'+label+'</span>';
-  }
-  function statusBtnHTML(status){
-    var map = { fertig:['Fertig','status-done'], in_arbeit:['In Arbeit','status-wip'], test:['Test','status-test'], coming_soon:['Coming Soon','status-soon'] };
-    var x = map[status]; return x ? '<span class="status-btn '+x[1]+'">'+x[0]+'</span>' : '';
-  }
-  function cardHTML(c){
-    var tag=(c.tag||'').toLowerCase();
-    var authorsStr = Array.isArray(c.authors) ? c.authors.map(function(a){ return (a && a.name)?a.name:a; }).join(', ') : (c.authors||'');
-    return '<div class="card card--'+tag+'">'+
-      (c.image_url?'<img class="card-thumb" src="'+c.image_url+'" alt="">':'')+
-      '<h3>'+(c.title||'')+'</h3>'+
-      (c.subtitle?'<p class="muted">'+c.subtitle+'</p>':'')+
-      (authorsStr?'<p class="card-authors muted">'+authorsStr+'</p>':'')+
-      '<div class="row-tags"><div class="left">'+tagPill(tag)+'</div></div>'+
-      '<div class="actions"><a class="btn btn-primary" href="'+(c.url||'#')+'" target="_blank" rel="noopener">Öffnen</a>'+statusBtnHTML(c.status)+'</div>'+
-    '</div>';
-  }
-  function renderHome(cards){
-    var grid = document.getElementById('websitesGrid'); if(!grid) return;
-    var items = (cards||[]).filter(function(c){ return ((c.page||'').trim().toLowerCase()==='home') && (c.is_published!==false); });
-    if(!items.length){
-      showGridError('Keine Karten gefunden. Prüfe /data/cards.json und ob "page": "home" gesetzt ist.');
-      return;
-    }
-    grid.innerHTML = items.map(cardHTML).join('');
-  }
-  async function safeLoad(){
-    try{
-      var res = await fetch('/data/cards.json', { cache:'no-cache' });
-      var txt = await res.text();
-      if (/^\s*</.test(txt)) throw new Error('cards.json lieferte HTML statt JSON – Pfad/Rewrite prüfen.');
-      var data = JSON.parse(txt);
-      var arr = Array.isArray(data.cards) ? data.cards : [];
-      renderHome(arr);
-    }catch(e){
-      console.error('[robust] Fehler:', e);
-      showGridError('Fehler beim Laden der Karten: '+e.message);
-    }
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', safeLoad);
-  }else{
-    safeLoad();
-  }
 })();
 </script>
 
